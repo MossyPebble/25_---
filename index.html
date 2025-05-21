@@ -12,13 +12,17 @@
         </h1>
 
         <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
+            <img id="stream" src="http://192.168.43.206:81/stream" crossorigin="" style="max-width: 100%; height: auto;">
+        </div>
+
+        <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
             <button id="led_button" style="width: 100px; height: 50px;">
                 LED
             </button>
 
-            <input type="text" id="wemos_ip_input" placeholder="Wemos IP" style="width: 150px; height: 50px; margin-left: 20px;" value="192.168.43.197">
+            <input type="text" id="wemos_ip_input" placeholder="Wemos IP" style="width: 150px; height: 50px; margin-left: 20px;" value="192.168.43.150">
             <button id="wemos_ip_button" style="width: 100px; height: 50px;">
-                WEMOS IP
+                Connect
             </button>
         </div>
 
@@ -59,7 +63,7 @@
     </div>
 
     <script>
-        let wemon_ip = '192.168.43.197';
+        let wemon_ip = '192.168.43.150';
         let state = {
             led: false,
             motorSpeed: 'LOW', // 초기 속도 설정
