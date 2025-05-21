@@ -25,11 +25,11 @@ int LMotorSpeed = 150;    // 좌측 모터 속도
 int RMotorSpeed = 150;    // 우측 모터 속도
 
 // WIFI 설정
-// IPAddress local_IP(192, 168, 43, 150);
-// IPAddress gateway(192, 168, 43, 1);
-// IPAddress subnet(255, 255, 255, 0);
-// IPAddress primaryDNS(8, 8, 8, 8);
-// IPAddress secondaryDNS(8, 8, 4, 4);
+IPAddress local_IP(192, 168, 43, 150);
+IPAddress gateway(192, 168, 43, 1);
+IPAddress subnet(255, 255, 255, 0);
+IPAddress primaryDNS(8, 8, 8, 8);
+IPAddress secondaryDNS(8, 8, 4, 4);
 
 WiFiServer server(80);
  
