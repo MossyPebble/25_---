@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
- 
+#include <DHT11.h>
+
 const char* ssid = "NLD";
 const char* password = "qwertyuiop";
 
@@ -23,6 +24,10 @@ int RMotorDirction = 0;    // 우측 모터 방향, 0이면 앞, 1이면 뒤
 
 int LMotorSpeed = 150;    // 좌측 모터 속도
 int RMotorSpeed = 150;    // 우측 모터 속도
+
+// DHT11 센서 핀
+#define DHT11_PIN D2
+DHT11 dht11(DHT11_PIN);
 
 // WIFI 설정
 IPAddress local_IP(192, 168, 43, 150);
@@ -108,6 +113,14 @@ void loop() {
 		digitalWrite(ledPin, LOW);
 		value = LOW;
 	}
+
+	int temperature = 0;
+	int humidity = 0;
+	int result = dht11.readTemperatureHumidity(temperature, humidity);
+
+	// 온도, 습도 측정 API
+	if (request.indexOf("/temperature") != -1) client.println(temperature);
+	if (request.indexOf("/humidity") != -1) client.println(humidity);
 
 	// 아래 코드들은 state만을 설정합니다.
 	// 이후 모터 제어는 그 아래의 코드에서 state를 기반으로 직접적으로 제어합니다.

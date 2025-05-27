@@ -30,6 +30,13 @@
             </button>
         </div>
 
+        <!-- 온습도 표시 및 새로고침 버튼 -->
+        <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
+            <h2 id="temperature" style="margin-right: 20px;">온도: 0°C</h2>
+            <h2 id="humidity">습도: 0%</h2>
+            <button id="refresh_button" style="margin-left: 20px; width: 100px; height: 50px;">새로고침</button>
+        </div>
+
         <button id="connectBtn" class="button" onclick="connect()">Connect</button>
         <input type="range" max="1" value="0.5" min="0" id="range" onchange="changeVolume(event)" step="0.1"><br />
         <button id="pauseBtn" class="button" onclick="pause()">Pause Playing</button>
@@ -85,6 +92,34 @@
             wemon_ip = input.value;
             console.log('Wemos IP:', wemon_ip);
         });
+
+        // 온습도 새로고침 버튼 클릭 이벤트
+        // 온습도 API는 각각 \temperature와 /humidity 엔드포인트로 요청
+        document.getElementById('refresh_button').addEventListener('click', () => {
+            fetch('http://' + wemon_ip + '/temperature')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('temperature').innerText = '온도: ' + data + '°C';
+                });
+
+            fetch('http://' + wemon_ip + '/humidity')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('humidity').innerText = '습도: ' + data + '%';
+                });
+        });
+
+        // 초기 온습도 값 설정
+        fetch('http://' + wemon_ip + '/temperature')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('temperature').innerText = '온도: ' + data + '°C';
+            });
+        fetch('http://' + wemon_ip + '/humidity')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('humidity').innerText = '습도: ' + data + '%';
+            });
 
         // LED 버튼 제어
         document.getElementById('led_button').addEventListener('click', () => {
