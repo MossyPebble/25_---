@@ -62,7 +62,7 @@ void onEventsCallback(WebsocketsEvent event, String data) {
   }
 }
 
-void i2s_install() {
+void setupMic() {
   // Set up I2S Processor configuration
   const i2s_config_t i2s_config = {
     .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX),
@@ -126,7 +126,7 @@ void connectWSServer() {
 
 void micTask(void* parameter) {
 
-  i2s_install();
+  setupMic();
   i2s_setpin();
   i2s_start(I2S_PORT);
 

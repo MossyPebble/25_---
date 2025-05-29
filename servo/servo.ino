@@ -1,4 +1,4 @@
-#include <Servo.h>
+#include <ESP32Servo.h>
 
 Servo myservo;  // create servo object to control a servo
 // twelve servo objects can be created on most boards
@@ -6,7 +6,7 @@ Servo myservo;  // create servo object to control a servo
 int pos = 0;    // variable to store the servo position
 
 void setup() {
-  myservo.attach(D8);  // attaches the servo on pin 9 to the servo object
+  myservo.attach(D4);  // attaches the servo on pin 9 to the servo object
 }
 
 void loop() {

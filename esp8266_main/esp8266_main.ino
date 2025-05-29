@@ -1,5 +1,9 @@
 #include <ESP8266WiFi.h>
 #include <DHT11.h>
+#include <Servo.h>
+
+Servo upperServo;   // 상단 서보 모터 객체
+Servo lowerServo;   // 하단 서보 모터 객체
 
 const char* ssid = "NLD";
 const char* password = "qwertyuiop";
@@ -15,6 +19,9 @@ int RMotorPin1 = D7;     // 우측 모터 제어신호 1핀
 int RMotorPin2 = D8;     // 우측 모터 제어신호 2핀
 int RMotorSpeedPin = D4;    // PWM 제어를 위한 핀
 
+int upperServoPin = D9;   // 상단 서보 모터 핀
+int lowerServoPin = D10;   // 하단 서보 모터 핀
+
 // state 정의
 int LMotorState = 0;   // 좌측 모터 상태, 0이면 OFF, 1이면 ON
 int RMotorState = 0;   // 우측 모터 상태, 0이면 OFF, 1이면 ON
@@ -24,6 +31,10 @@ int RMotorDirction = 0;    // 우측 모터 방향, 0이면 앞, 1이면 뒤
 
 int LMotorSpeed = 150;    // 좌측 모터 속도
 int RMotorSpeed = 150;    // 우측 모터 속도
+
+// servo 모터 state 정의
+int upperServoAngle = 0;
+int lowerServoAngle = 0;
 
 // DHT11 센서 핀
 #define DHT11_PIN D2
@@ -41,6 +52,10 @@ WiFiServer server(80);
 void setup() {
 	Serial.begin(115200);
 	delay(10);
+
+	// 서보 모터 초기화
+	upperServo.attach(upperServoPin);   // 상단 서보 모터 핀 연결
+	lowerServo.attach(lowerServoPin);   // 하단 서보 모터 핀 연결
 
 	// 고정 IP 설정
 	if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
@@ -121,6 +136,35 @@ void loop() {
 	// 온도, 습도 측정 API
 	if (request.indexOf("/temperature") != -1) client.println(temperature);
 	if (request.indexOf("/humidity") != -1) client.println(humidity);
+
+	// servo 모터 제어 API
+	if (request.indexOf("/angle=") != -1)
+	{
+		int angleStart = request.indexOf("/angle=") + 7; // "/angle=" 뒤의 숫자 시작 위치
+		int angleEnd = request.indexOf(" ", angleStart); // 공백 또는 요청 끝까지 숫자 추출
+		if (angleEnd == -1)
+			angleEnd = request.length(); // 공백이 없으면 요청 끝까지
+
+		String angleStr = request.substring(angleStart, angleEnd); // 숫자 부분 추출
+		int angle = angleStr.toInt();							   // 문자열을 정수로 변환
+
+		각도 유효성 검사 (0~180도 범위)
+		if (angle >= 0 && angle <= 180)
+		{
+			upperServoAngle = angle; // 상단 서보 모터 각도 설정
+			lowerServoAngle = angle; // 하단 서보 모터 각도 설정 (필요 시 분리 가능)
+			Serial.print("Servo angle set to: ");
+			Serial.println(angle);
+
+			// 서보 모터 제어 코드 추가
+			upperServo.write(upperServoAngle); // 상단 서보 모터 회전
+			lowerServo.write(lowerServoAngle); // 하단 서보 모터 회전
+		}
+		else
+		{
+			Serial.println("Invalid angle value");
+		}
+	}
 
 	// 아래 코드들은 state만을 설정합니다.
 	// 이후 모터 제어는 그 아래의 코드에서 state를 기반으로 직접적으로 제어합니다.

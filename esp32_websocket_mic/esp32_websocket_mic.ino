@@ -15,7 +15,7 @@ const char* password = "qwertyuiop";
 
 WebSocketsServer webSocket(81); // WebSocket 서버 포트
 
-void i2s_install() {
+void setupMic() {
     const i2s_config_t i2s_config = {
         .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX),
         .sample_rate = 16000,
@@ -29,15 +29,12 @@ void i2s_install() {
     };
 
     i2s_driver_install(I2S_PORT, &i2s_config, 0, NULL);
-}
 
-void i2s_setpin() {
     const i2s_pin_config_t pin_config = {
         .bck_io_num = I2S_SCK,
         .ws_io_num = I2S_WS,
         .data_out_num = -1,
-        .data_in_num = I2S_SD
-    };
+        .data_in_num = I2S_SD};
 
     i2s_set_pin(I2S_PORT, &pin_config);
 }
@@ -45,18 +42,20 @@ void i2s_setpin() {
 void connectWiFi() {
     
     // 고정 IP 설정
-    IPAddress local_IP(192, 168, 43, 210); // 원하는 고정 IP 주소
+    IPAddress local_IP(192, 168, 43, 157); // 원하는 고정 IP 주소
     IPAddress gateway(192, 168, 43, 1);    // 게이트웨이 주소 (일반적으로 라우터 IP)
     IPAddress subnet(255, 255, 255, 0);   // 서브넷 마스크
     IPAddress primaryDNS(8, 8, 8, 8);     // 기본 DNS 서버 (Google DNS)
     IPAddress secondaryDNS(8, 8, 4, 4);   // 보조 DNS 서버 (Google DNS)
 
-    if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
-        Serial.println("STA Failed to configure");
+    if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) 
+    {
+        Serial.println("Static IP configuration failed!");
     }
 
     WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED) {
+    while (WiFi.status() != WL_CONNECTED) 
+    {
         delay(500);
         Serial.print(".");
     }
@@ -66,8 +65,7 @@ void connectWiFi() {
 }
 
 void micTask(void* parameter) {
-    i2s_install();
-    i2s_setpin();
+    setupMic();
     i2s_start(I2S_PORT);
 
     size_t bytesIn = 0;
