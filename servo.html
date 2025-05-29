@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dual Servo Control Test</title>
+</head>
+<body>
+    <div style="display: flex; flex-direction: column; align-items: center; margin-top: 40px;">
+        <h3>Dual Servo Control</h3>
+        <div>
+            <button id="servoUpButton"   style="width: 70px; height: 50px;">▲</button>
+        </div>
+        <div>
+            <button id="servoLeftButton"  style="width: 70px; height: 50px; margin-right: 10px;">◀</button>
+            <button id="servoRightButton" style="width: 70px; height: 50px; margin-left: 10px;">▶</button>
+        </div>
+        <div>
+            <button id="servoDownButton" style="width: 70px; height: 50px;">▼</button>
+        </div>
+        <input type="text" id="servo_ip_input" placeholder="ESP8266 IP" value="192.168.169.219" style="margin-top:30px; width:150px; height:50px;">
+        <div style="margin-top:10px; color:gray; font-size:13px;"> 
+            ESP8266의 실제 IP 주소를 위 입력란에 맞게 입력하세요.
+        </div>
+    </div>
+    <script>
+        // "change" 대신 "input"으로 실시간 IP 업데이트
+        let servo_ip = document.getElementById('servo_ip_input').value.trim();
+
+        document.getElementById('servo_ip_input').addEventListener('input', function() {
+            servo_ip = this.value.trim();
+        });
+
+        function sendServoCommand(cmd) {
+            if (!servo_ip) {
+                alert("IP 주소를 먼저 입력하세요.");
+                return;
+            }
+            // ESP8266은 라우터 환경에서 CORS 헤더가 없으므로, fetch의 에러는 무시해도 동작엔 영향 없음
+            fetch('http://' + servo_ip + '/' + cmd)
+                .then(() => console.log('Sent:', cmd))
+                .catch((err) => console.error('Servo command error:', err));
+        }
+
+        // 버튼 할당
+        const servoLeftBtn = document.getElementById('servoLeftButton');
+        const servoRightBtn = document.getElementById('servoRightButton');
+        const servoUpBtn = document.getElementById('servoUpButton');
+        const servoDownBtn = document.getElementById('servoDownButton');
+
+        // 좌
+        servoLeftBtn.addEventListener('mousedown', () => sendServoCommand('LEFT_START'));
+        servoLeftBtn.addEventListener('mouseup',   () => sendServoCommand('LEFT_STOP'));
+        servoLeftBtn.addEventListener('mouseleave', () => sendServoCommand('LEFT_STOP'));
+        servoLeftBtn.addEventListener('touchstart', (e) => { e.preventDefault(); sendServoCommand('LEFT_START'); });
+        servoLeftBtn.addEventListener('touchend',   (e) => { e.preventDefault(); sendServoCommand('LEFT_STOP');  });
+
+        // 우
+        servoRightBtn.addEventListener('mousedown', () => sendServoCommand('RIGHT_START'));
+        servoRightBtn.addEventListener('mouseup',   () => sendServoCommand('RIGHT_STOP'));
+        servoRightBtn.addEventListener('mouseleave', () => sendServoCommand('RIGHT_STOP'));
+        servoRightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); sendServoCommand('RIGHT_START'); });
+        servoRightBtn.addEventListener('touchend',   (e) => { e.preventDefault(); sendServoCommand('RIGHT_STOP'); });
+
+        // 상
+        servoUpBtn.addEventListener('mousedown', () => sendServoCommand('UP_START'));
+        servoUpBtn.addEventListener('mouseup',   () => sendServoCommand('UP_STOP'));
+        servoUpBtn.addEventListener('mouseleave', () => sendServoCommand('UP_STOP'));
+        servoUpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); sendServoCommand('UP_START'); });
+        servoUpBtn.addEventListener('touchend',   (e) => { e.preventDefault(); sendServoCommand('UP_STOP');  });
+
+        // 하
+        servoDownBtn.addEventListener('mousedown', () => sendServoCommand('DOWN_START'));
+        servoDownBtn.addEventListener('mouseup',   () => sendServoCommand('DOWN_STOP'));
+        servoDownBtn.addEventListener('mouseleave', () => sendServoCommand('DOWN_STOP'));
+        servoDownBtn.addEventListener('touchstart', (e) => { e.preventDefault(); sendServoCommand('DOWN_START'); });
+        servoDownBtn.addEventListener('touchend',   (e) => { e.preventDefault(); sendServoCommand('DOWN_STOP');  });
+
+    </script>
+</body>
+</html>
