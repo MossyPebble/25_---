@@ -1,33 +1,37 @@
-<body>
-    <h2>스피커 테스트</h2>
-    <button id="startMicrophoneButton" onclick="connectWebSocket()">Start Microphone Stream</button>
-    <button id="disconnectButton" onclick="disconnectWebSocket()">Disconnect</button>
-</body>
+import React, { useState, useEffect, useRef } from 'react';
 
-<script>
+function MicController({ esp32SpeakerIP, micEnabled }) {
     let ws;
     let audioContext, processor, source;
     let latestBuffer = null;
     let sendInterval;
 
+    useEffect(function () {
+        if (micEnabled == 'mic') {
+            connectWebSocket();
+        } else {
+            disconnectWebSocket();
+        }
+    }, [micEnabled]);
+
     function connectWebSocket() {
-        const WS_URL = 'ws://192.168.43.158:81';
+        let WS_URL = 'ws://' + esp32SpeakerIP + ':81';
         ws = new WebSocket(WS_URL);
 
-        ws.onopen = () => {
-            console.log("WebSocket connected");
+        ws.onopen = function () {
+            console.log('WebSocket connected');
             startMicrophoneStream();
-            startSendingLoop(); // 데이터 전송 타이머 시작
+            startSendingLoop();
         };
 
-        ws.onclose = () => {
-            console.log("WebSocket closed");
+        ws.onclose = function () {
+            console.log('WebSocket closed');
             stopSendingLoop();
             stopMicrophone();
         };
 
-        ws.onerror = (error) => {
-            console.error("WebSocket error:", error);
+        ws.onerror = function (error) {
+            console.error('WebSocket error:', error);
         };
     }
 
@@ -88,4 +92,10 @@
             console.log("WebSocket is not connected");
         }
     }
-</script>
+
+    return (
+        <></>
+    );
+}
+
+export default MicController;

@@ -2,9 +2,6 @@
 #include <DHT11.h>
 #include <Servo.h>
 
-Servo upperServo;   // 상단 서보 모터 객체
-Servo lowerServo;   // 하단 서보 모터 객체
-
 const char* ssid = "NLD";
 const char* password = "qwertyuiop";
 
@@ -19,8 +16,8 @@ int RMotorPin1 = D7;     // 우측 모터 제어신호 1핀
 int RMotorPin2 = D8;     // 우측 모터 제어신호 2핀
 int RMotorSpeedPin = D4;    // PWM 제어를 위한 핀
 
-int upperServoPin = D9;   // 상단 서보 모터 핀
-int lowerServoPin = D10;   // 하단 서보 모터 핀
+int upperServoPin = D1;   // 상단 서보 모터 핀
+int lowerServoPin = D2;   // 하단 서보 모터 핀
 
 // state 정의
 int LMotorState = 0;   // 좌측 모터 상태, 0이면 OFF, 1이면 ON
@@ -32,13 +29,25 @@ int RMotorDirction = 0;    // 우측 모터 방향, 0이면 앞, 1이면 뒤
 int LMotorSpeed = 150;    // 좌측 모터 속도
 int RMotorSpeed = 150;    // 우측 모터 속도
 
-// servo 모터 state 정의
-int upperServoAngle = 0;
-int lowerServoAngle = 0;
-
 // DHT11 센서 핀
 #define DHT11_PIN D2
 DHT11 dht11(DHT11_PIN);
+
+// servo 방향 제어 상태
+volatile bool moveLeft = false;
+volatile bool moveRight = false;
+volatile bool moveUp = false;
+volatile bool moveDown = false;
+
+volatile int posH = 90; // 초기 각도: 중앙 (0~180)
+volatile int posV = 90; // 초기 각도: 중앙 (0~180)
+
+unsigned long lastMoveTime = 0;
+const unsigned long moveInterval = 20; // ms, 각도 1도씩 조절 간격
+
+// 두 개의 서보 객체 생성 (수평, 수직)
+Servo servoH; // 좌우(수평) 움직임
+Servo servoV; // 상하(수직) 움직임
 
 // WIFI 설정
 IPAddress local_IP(192, 168, 43, 150);
@@ -54,8 +63,10 @@ void setup() {
 	delay(10);
 
 	// 서보 모터 초기화
-	upperServo.attach(upperServoPin);   // 상단 서보 모터 핀 연결
-	lowerServo.attach(lowerServoPin);   // 하단 서보 모터 핀 연결
+	servoH.attach(servoHPin);
+	servoV.attach(servoVPin);
+	servoH.write(posH);
+	servoV.write(posV);
 
 	// 고정 IP 설정
 	if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
@@ -138,32 +149,40 @@ void loop() {
 	if (request.indexOf("/humidity") != -1) client.println(humidity);
 
 	// servo 모터 제어 API
-	if (request.indexOf("/angle=") != -1)
+	// 좌우 제어 명령 파싱 (수평)
+	if (request.indexOf("/LEFT_START") != -1)
 	{
-		int angleStart = request.indexOf("/angle=") + 7; // "/angle=" 뒤의 숫자 시작 위치
-		int angleEnd = request.indexOf(" ", angleStart); // 공백 또는 요청 끝까지 숫자 추출
-		if (angleEnd == -1)
-			angleEnd = request.length(); // 공백이 없으면 요청 끝까지
+		moveLeft = true;
+	}
+	if (request.indexOf("/LEFT_STOP") != -1)
+	{
+		moveLeft = false;
+	}
+	if (request.indexOf("/RIGHT_START") != -1)
+	{
+		moveRight = true;
+	}
+	if (request.indexOf("/RIGHT_STOP") != -1)
+	{
+		moveRight = false;
+	}
 
-		String angleStr = request.substring(angleStart, angleEnd); // 숫자 부분 추출
-		int angle = angleStr.toInt();							   // 문자열을 정수로 변환
-
-		각도 유효성 검사 (0~180도 범위)
-		if (angle >= 0 && angle <= 180)
-		{
-			upperServoAngle = angle; // 상단 서보 모터 각도 설정
-			lowerServoAngle = angle; // 하단 서보 모터 각도 설정 (필요 시 분리 가능)
-			Serial.print("Servo angle set to: ");
-			Serial.println(angle);
-
-			// 서보 모터 제어 코드 추가
-			upperServo.write(upperServoAngle); // 상단 서보 모터 회전
-			lowerServo.write(lowerServoAngle); // 하단 서보 모터 회전
-		}
-		else
-		{
-			Serial.println("Invalid angle value");
-		}
+	// 상하 제어 명령 파싱 (수직)
+	if (request.indexOf("/UP_START") != -1)
+	{
+		moveUp = true;
+	}
+	if (request.indexOf("/UP_STOP") != -1)
+	{
+		moveUp = false;
+	}
+	if (request.indexOf("/DOWN_START") != -1)
+	{
+		moveDown = true;
+	}
+	if (request.indexOf("/DOWN_STOP") != -1)
+	{
+		moveDown = false;
 	}
 
 	// 아래 코드들은 state만을 설정합니다.
@@ -220,5 +239,36 @@ void loop() {
 		analogWrite(RMotorSpeedPin, RMotorSpeed);   // 모터 속도를 설정
 	} else {
 		analogWrite(RMotorSpeedPin, 0);   // 모터 속도를 0으로 설정
+	}
+
+	// servo 모터 제어, 주기적으로 각도 업데이트
+	unsigned long now = millis();
+	if (now - lastMoveTime > moveInterval)
+	{
+		lastMoveTime = now;
+
+		// 좌우(수평)
+		if (moveLeft && posH > 0)
+		{
+			posH -= 1;
+			servoH.write(posH);
+		}
+		if (moveRight && posH < 180)
+		{
+			posH += 1;
+			servoH.write(posH);
+		}
+
+		// 상하(수직)
+		if (moveUp && posV < 180)
+		{
+			posV += 1;
+			servoV.write(posV);
+		}
+		if (moveDown && posV > 0)
+		{
+			posV -= 1;
+			servoV.write(posV);
+		}
 	}
 }

@@ -1,0 +1,39 @@
+.weather-box {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    /* 기본적으로 세로 정렬 */
+    align-items: center;
+    font-family: 'Segoe UI', sans-serif;
+    padding-top: 10vh;
+    box-sizing: border-box;
+}
+
+.weather-card {
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.4);
+    padding: 2rem 3rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+    margin-bottom: 2rem;
+}
+
+.temperature {
+    font-size: 3.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.humidity {
+    font-size: 2rem;
+    color: #555;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.weather-children {
+    width: 100%;
+    text-align: center;
+}

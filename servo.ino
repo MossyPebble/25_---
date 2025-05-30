@@ -62,37 +62,37 @@ void setup() {
 void loop() {
   WiFiClient client = server.available();
   if (client) {
-    String req = client.readStringUntil('\r');
+    String request = client.readStringUntil('\r');
     client.flush();
 
     Serial.print("Received request: ");
-    Serial.println(req);  // <-- 로그 출력
+    Serial.println(request);  // <-- 로그 출력
 
     // 좌우 제어 명령 파싱 (수평)
-    if (req.indexOf("/LEFT_START") != -1) {
+    if (request.indexOf("/LEFT_START") != -1) {
       moveLeft = true;
     }
-    if (req.indexOf("/LEFT_STOP") != -1) {
+    if (request.indexOf("/LEFT_STOP") != -1) {
       moveLeft = false;
     }
-    if (req.indexOf("/RIGHT_START") != -1) {
+    if (request.indexOf("/RIGHT_START") != -1) {
       moveRight = true;
     }
-    if (req.indexOf("/RIGHT_STOP") != -1) {
+    if (request.indexOf("/RIGHT_STOP") != -1) {
       moveRight = false;
     }
 
     // 상하 제어 명령 파싱 (수직)
-    if (req.indexOf("/UP_START") != -1) {
+    if (request.indexOf("/UP_START") != -1) {
       moveUp = true;
     }
-    if (req.indexOf("/UP_STOP") != -1) {
+    if (request.indexOf("/UP_STOP") != -1) {
       moveUp = false;
     }
-    if (req.indexOf("/DOWN_START") != -1) {
+    if (request.indexOf("/DOWN_START") != -1) {
       moveDown = true;
     }
-    if (req.indexOf("/DOWN_STOP") != -1) {
+    if (request.indexOf("/DOWN_STOP") != -1) {
       moveDown = false;
     }
 
