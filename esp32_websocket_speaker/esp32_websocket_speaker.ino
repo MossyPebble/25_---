@@ -7,6 +7,8 @@
 const char *ssid = "NLD";
 const char *password = "qwertyuiop";
 
+int connected = false;
+
 // WebSocket 서버 포트
 WebSocketsServer webSocket(81);
 
@@ -77,21 +79,33 @@ void setup()
     webSocket.onEvent([](uint8_t num, WStype_t type, uint8_t *payload, size_t length) {
     switch (type) {
         case WStype_CONNECTED:
+            connected = true;
             Serial.printf("Client %u connected from %s\n", num, webSocket.remoteIP(num).toString().c_str());
             break;
-        case WStype_DISCONNECTED:
+        case WStype_DISCONNECTED:{
+            connected = false;
             Serial.printf("Client %u disconnected\n", num);
-            break;
-        case WStype_BIN:
+
+            // 무음 버퍼 전송 (예: 1024 샘플 = 약 64ms @16kHz)
+            uint8_t silence[2048] = {0}; // 1024 * 2바이트 (16bit mono)
+            size_t written;
+            for (int i = 0; i < 100; i++) {
+                i2s_write(I2S_NUM_1, silence, sizeof(silence), &written, portMAX_DELAY);
+            }
+            break;}
+        case WStype_BIN:{
             static unsigned long lastTime = 0;
             unsigned long now = millis();
             Serial.printf("[%lu] Client %u sent %u bytes\n", now, num, length);
             lastTime = now;
 
             // PCM 처리
-            size_t written;
-            i2s_write(I2S_NUM_1, payload, length, &written, portMAX_DELAY);
+            if (connected){
+              size_t written;
+              i2s_write(I2S_NUM_1, payload, length, &written, portMAX_DELAY);
+            }
             break;
+            }
     }
 });
 

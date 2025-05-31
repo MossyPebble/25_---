@@ -16,8 +16,8 @@ int RMotorPin1 = D7;     // 우측 모터 제어신호 1핀
 int RMotorPin2 = D8;     // 우측 모터 제어신호 2핀
 int RMotorSpeedPin = D4;    // PWM 제어를 위한 핀
 
-int upperServoPin = D1;   // 상단 서보 모터 핀
-int lowerServoPin = D2;   // 하단 서보 모터 핀
+int ServoHPin = D1;   // 상단 서보 모터 핀
+int ServoVPin = D2;   // 하단 서보 모터 핀
 
 // state 정의
 int LMotorState = 0;   // 좌측 모터 상태, 0이면 OFF, 1이면 ON
@@ -30,7 +30,7 @@ int LMotorSpeed = 150;    // 좌측 모터 속도
 int RMotorSpeed = 150;    // 우측 모터 속도
 
 // DHT11 센서 핀
-#define DHT11_PIN D2
+#define DHT11_PIN D0
 DHT11 dht11(DHT11_PIN);
 
 // servo 방향 제어 상태
@@ -60,11 +60,12 @@ WiFiServer server(80);
  
 void setup() {
 	Serial.begin(115200);
+  Serial.print("start");
 	delay(10);
 
 	// 서보 모터 초기화
-	servoH.attach(servoHPin);
-	servoV.attach(servoVPin);
+	servoH.attach(ServoHPin);
+	servoV.attach(ServoVPin);
 	servoH.write(posH);
 	servoV.write(posV);
 
@@ -76,9 +77,9 @@ void setup() {
 	pinMode(ledPin, OUTPUT);
 	digitalWrite(ledPin, LOW);
 
-    pinMode(LMotorPin1, OUTPUT);    // 제어 1번핀 출력모드 설정
-    pinMode(LMotorPin2, OUTPUT);    // 제어 2번핀 출력모드 설정
-    pinMode(LMotorSpeedPin, OUTPUT);   // PWM 제어핀 출력모드 설정
+  pinMode(LMotorPin1, OUTPUT);    // 제어 1번핀 출력모드 설정
+  pinMode(LMotorPin2, OUTPUT);    // 제어 2번핀 출력모드 설정
+  pinMode(LMotorSpeedPin, OUTPUT);   // PWM 제어핀 출력모드 설정
 
 	pinMode(RMotorPin1, OUTPUT);    // 제어 1번핀 출력모드 설정
 	pinMode(RMotorPin2, OUTPUT);    // 제어 2번핀 출력모드 설정
@@ -248,26 +249,27 @@ void loop() {
 		lastMoveTime = now;
 
 		// 좌우(수평)
+    int angle_change = 5;
 		if (moveLeft && posH > 0)
 		{
-			posH -= 1;
+			posH -= angle_change;
 			servoH.write(posH);
 		}
 		if (moveRight && posH < 180)
 		{
-			posH += 1;
+			posH += angle_change;
 			servoH.write(posH);
 		}
 
 		// 상하(수직)
 		if (moveUp && posV < 180)
 		{
-			posV += 1;
+			posV += angle_change;
 			servoV.write(posV);
 		}
 		if (moveDown && posV > 0)
 		{
-			posV -= 1;
+			posV -= angle_change;
 			servoV.write(posV);
 		}
 	}
