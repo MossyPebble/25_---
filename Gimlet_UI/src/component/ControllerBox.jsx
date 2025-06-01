@@ -166,49 +166,59 @@ function sendServoCommand(wemos_ip, cmd) {
         return;
     }
     fetch(`http://${wemos_ip}/${cmd}`)
-        .then(() => console.log('Sent:', cmd))
+        .then(response => response.text())
+        .then(data => console.log('Servo command response:', data))
         .catch((err) => console.error('Servo command error:', err));
 };
 
 function setMotorSpeed(wemos_ip, speed) {
-    fetch(`http://${wemos_ip}/Speed=${speed}`);
-    console.log(`Motor Speed set to: ${speed}`);
+    fetch(`http://${wemos_ip}/Speed=${speed}`)
+        .then(response => response.text())
+        .then(data => console.log('Motor speed response:', data))
+        .catch(err => console.error('Error setting motor speed:', err));
 }
 
 function goForward(wemos_ip) {
-    fetch('http://' + wemos_ip + '/LMotor=ON');
-    fetch('http://' + wemos_ip + '/RMotor=ON');
-    fetch('http://' + wemos_ip + '/LMotor=FORWARD');
-    fetch('http://' + wemos_ip + '/RMotor=FORWARD');
-    console.log('UP');
+    fetch(`http://${wemos_ip}/forward`)
+        .then(response => response.text())
+        .then(data => console.log('Response:', data))
+        .catch(err => console.error('Error:', err));
 }
 
 function goBackward(wemos_ip) {
-    fetch('http://' + wemos_ip + '/LMotor=ON');
-    fetch('http://' + wemos_ip + '/RMotor=ON');
-    fetch('http://' + wemos_ip + '/LMotor=BACKWARD');
-    fetch('http://' + wemos_ip + '/RMotor=BACKWARD');
-    console.log('DOWN');
+    fetch(`http://${wemos_ip}/backward`)
+        .then(response => response.text())
+        .then(data => console.log('Response:', data))
+        .catch(err => console.error('Error:', err));
 }
 
 function stop(wemos_ip) {
-    fetch('http://' + wemos_ip + '/LMotor=OFF');
-    fetch('http://' + wemos_ip + '/RMotor=OFF');
-    console.log('STOP');
+    fetch(`http://${wemos_ip}/stop`)
+        .then(response => response.text())
+        .then(data => console.log('Response:', data))
+        .catch(err => console.error('Error:', err));
+    
+    // 50ms 이후, 한번 더 stop 명령을 보내서 확실히 정지
+    setTimeout(() => {
+        fetch(`http://${wemos_ip}/stop`)
+            .then(response => response.text())
+            .then(data => console.log('Response:', data))
+            .catch(err => console.error('Error:', err));
+    }, 50);
 }
 
 function turnLeft(wemos_ip) {
-    fetch('http://' + wemos_ip + '/LMotor=ON');
-    fetch('http://' + wemos_ip + '/RMotor=OFF');
-    fetch('http://' + wemos_ip + '/LMotor=FORWARD');
-    console.log('LEFT');
+    fetch(`http://${wemos_ip}/left`)
+        .then(response => response.text())
+        .then(data => console.log('Response:', data))
+        .catch(err => console.error('Error:', err));
 }
 
 function turnRight(wemos_ip) {
-    fetch('http://' + wemos_ip + '/LMotor=OFF');
-    fetch('http://' + wemos_ip + '/RMotor=ON');
-    fetch('http://' + wemos_ip + '/RMotor=FORWARD');
-    console.log('RIGHT');
+    fetch(`http://${wemos_ip}/right`)
+        .then(response => response.text())
+        .then(data => console.log('Response:', data))
+        .catch(err => console.error('Error:', err));
 }
 
 export default ControllerBox;

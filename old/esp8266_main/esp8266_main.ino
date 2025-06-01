@@ -29,9 +29,6 @@ int RMotorDirction = 0;    // 우측 모터 방향, 0이면 앞, 1이면 뒤
 int LMotorSpeed = 150;    // 좌측 모터 속도
 int RMotorSpeed = 150;    // 우측 모터 속도
 
-int temperature = 0;
-int humidity = 0;
-
 // DHT11 센서 핀
 #define DHT11_PIN D0
 DHT11 dht11(DHT11_PIN);
@@ -46,7 +43,7 @@ volatile int posH = 90; // 초기 각도: 중앙 (0~180)
 volatile int posV = 90; // 초기 각도: 중앙 (0~180)
 
 unsigned long lastMoveTime = 0;
-const unsigned long moveInterval = 50; // ms, 각도 1도씩 조절 간격
+const unsigned long moveInterval = 100; // ms, 각도 1도씩 조절 간격
 
 // 두 개의 서보 객체 생성 (수평, 수직)
 Servo servoH; // 좌우(수평) 움직임
@@ -116,7 +113,102 @@ void setup() {
  
 void loop() {
 
-  // 좌측 모터 제어
+	// Check if a client has connected
+	WiFiClient client = server.available();
+	if (!client) {
+		return;
+	}
+	
+	// Wait until the client sends some data
+	Serial.println("new client");
+	while(!client.available()){
+		delay(1);
+	}
+	
+	// Read the first line of the request
+	String request = client.readStringUntil('\r');
+	Serial.println(request);
+	client.flush();
+
+	int temperature = 0;
+	int humidity = 0;
+	
+	// 온도, 습도 측정 API
+	if (request.indexOf("/temperature") != -1) {
+		int result = dht11.readTemperatureHumidity(temperature, humidity);
+		client.println(temperature);
+	}
+	if (request.indexOf("/humidity") != -1) {
+		int result = dht11.readTemperatureHumidity(temperature, humidity);
+		client.println(humidity);
+	}
+
+	// servo 모터 제어 API
+	// 좌우 제어 명령 파싱 (수평)
+	if (request.indexOf("/LEFT_START") != -1)
+	{
+		moveLeft = true;
+	}
+	if (request.indexOf("/LEFT_STOP") != -1)
+	{
+		moveLeft = false;
+	}
+	if (request.indexOf("/RIGHT_START") != -1)
+	{
+		moveRight = true;
+	}
+	if (request.indexOf("/RIGHT_STOP") != -1)
+	{
+		moveRight = false;
+	}
+
+	// 상하 제어 명령 파싱 (수직)
+	if (request.indexOf("/UP_START") != -1)
+	{
+		moveUp = true;
+	}
+	if (request.indexOf("/UP_STOP") != -1)
+	{
+		moveUp = false;
+	}
+	if (request.indexOf("/DOWN_START") != -1)
+	{
+		moveDown = true;
+	}
+	if (request.indexOf("/DOWN_STOP") != -1)
+	{
+		moveDown = false;
+	}
+
+	// 아래 코드들은 state만을 설정합니다.
+	// 이후 모터 제어는 그 아래의 코드에서 state를 기반으로 직접적으로 제어합니다.
+	// 좌측 모터 제어 API, /LMotor=ON, /LMotor=OFF, /LMotor=FORWARD, /LMotor=BACKWARD
+	if (request.indexOf("/LMotor=ON") != -1) LMotorState = 1; // 좌측 모터 상태를 ON으로 설정
+	if (request.indexOf("/LMotor=OFF") != -1) LMotorState = 0;   // 좌측 모터 상태를 OFF로 설정
+	if (request.indexOf("/LMotor=FORWARD") != -1) LMotorDirction = 0;   // 좌측 모터 방향을 정방향으로 설정
+	if (request.indexOf("/LMotor=BACKWARD") != -1) LMotorDirction = 1;   // 좌측 모터 방향을 역방향으로 설정
+
+	// 우측 모터 제어 API, /RMotor=ON, /RMotor=OFF, /RMotor=FORWARD, /RMotor=BACKWARD
+	if (request.indexOf("/RMotor=ON") != -1) RMotorState = 1; // 우측 모터 상태를 ON으로 설정
+	if (request.indexOf("/RMotor=OFF") != -1) RMotorState = 0;   // 우측 모터 상태를 OFF로 설정
+	if (request.indexOf("/RMotor=FORWARD") != -1) RMotorDirction = 0;   // 우측 모터 방향을 정방향으로 설정
+	if (request.indexOf("/RMotor=BACKWARD") != -1) RMotorDirction = 1;   // 우측 모터 방향을 역방향으로 설정
+
+	// 모터 속도 제어 API, /Speed=LOW, /Speed=HIGH
+	if (request.indexOf("/Speed=LOW") != -1) {
+		LMotorSpeed = 50;   // 좌측 모터 속도를 낮음으로 설정
+		RMotorSpeed = 50;   // 우측 모터 속도를 낮음으로 설정
+	}
+	if (request.indexOf("/Speed=MEDIUM") != -1) {
+		LMotorSpeed = 150;   // 좌측 모터 속도를 중간으로 설정
+		RMotorSpeed = 150;   // 우측 모터 속도를 중간으로 설정
+	}
+	if (request.indexOf("/Speed=HIGH") != -1) {
+		LMotorSpeed = 255;   // 좌측 모터 속도를 높음으로 설정
+		RMotorSpeed = 255;   // 우측 모터 속도를 높음으로 설정
+	}
+
+	// 좌측 모터 제어
 	if (LMotorState == 1){
 		if (LMotorDirction == 0) {   // 좌측 모터가 정방향으로 회전
 			digitalWrite(LMotorPin1, HIGH);  // 모터가 정방향으로 회전
@@ -174,145 +266,5 @@ void loop() {
 			posV -= angle_change;
 			servoV.write(posV);
 		}
-	}
-
-	// Check if a client has connected
-	WiFiClient client = server.available();
-	if (!client) {
-		return;
-	}
-	
-	// Wait until the client sends some data
-	Serial.println("new client");
-	while(!client.available()){
-		delay(1);
-	}
-	
-	// Read the first line of the request
-	String request = client.readStringUntil('\r');
-	Serial.println(request);
-	client.flush();
-
-	// 온도, 습도 측정 API
-	if (request.indexOf("/env") != -1) {
-		int result = dht11.readTemperatureHumidity(temperature, humidity);
-		client.println(temperature);
-		client.println(humidity);
-	}
-
-	// servo 모터 제어 API
-	// 좌우 제어 명령 파싱 (수평)
-	if (request.indexOf("/LEFT_START") != -1)
-	{
-		moveLeft = true;
-		client.println("Horizontal Servo Left Start");
-	}
-	if (request.indexOf("/LEFT_STOP") != -1)
-	{
-		moveLeft = false;
-		client.println("Horizontal Servo Left Stop");
-	}
-	if (request.indexOf("/RIGHT_START") != -1)
-	{
-		moveRight = true;
-		client.println("Horizontal Servo Right Start");
-	}
-	if (request.indexOf("/RIGHT_STOP") != -1)
-	{
-		moveRight = false;
-		client.println("Horizontal Servo Right Stop");
-	}
-
-	// 상하 제어 명령 파싱 (수직)
-	if (request.indexOf("/UP_START") != -1)
-	{
-		moveUp = true;
-		client.println("Vertical Servo Up Start");
-	}
-	if (request.indexOf("/UP_STOP") != -1)
-	{
-		moveUp = false;
-		client.println("Vertical Servo Up Stop");
-	}
-	if (request.indexOf("/DOWN_START") != -1)
-	{
-		moveDown = true;
-		client.println("Vertical Servo Down Start");
-	}
-	if (request.indexOf("/DOWN_STOP") != -1)
-	{
-		moveDown = false;
-		client.println("Vertical Servo Down Stop");
-	}
-
-	// 아래 코드들은 state만을 설정합니다.
-	// 이후 모터 제어는 그 아래의 코드에서 state를 기반으로 직접적으로 제어합니다.
-	if (request.indexOf("/forward") != -1){
-
-		// 전진 명령
-		LMotorState = 1;   // 좌측 모터 ON
-		RMotorState = 1;   // 우측 모터 ON
-		LMotorDirction = 0;   // 좌측 모터 정방향
-		RMotorDirction = 0;   // 우측 모터 정방향
-
-		client.println("Moving forward");
-	}
-	if (request.indexOf("/backward") != -1){
-
-		// 후진 명령
-		LMotorState = 1;   // 좌측 모터 ON
-		RMotorState = 1;   // 우측 모터 ON
-		LMotorDirction = 1;   // 좌측 모터 역방향
-		RMotorDirction = 1;   // 우측 모터 역방향
-
-		client.println("Moving backward");
-	}
-	if (request.indexOf("/left") != -1){
-
-		// 좌회전 명령
-		LMotorState = 1;   // 좌측 모터 ON
-		RMotorState = 1;   // 우측 모터 ON
-		LMotorDirction = 1;   // 좌측 모터 역방향
-		RMotorDirction = 0;   // 우측 모터 정방향
-
-		client.println("Turning left");
-	}
-	if (request.indexOf("/right") != -1){
-
-		// 우회전 명령
-		LMotorState = 1;   // 좌측 모터 ON
-		RMotorState = 1;   // 우측 모터 ON
-		LMotorDirction = 0;   // 좌측 모터 정방향
-		RMotorDirction = 1;   // 우측 모터 역방향
-
-		client.println("Turning right");
-	}
-	if (request.indexOf("/stop") != -1){
-
-		// 정지 명령
-		LMotorState = 0;   // 좌측 모터 OFF
-		RMotorState = 0;   // 우측 모터 OFF
-
-		client.println("Stopping");
-	}
-
-	// 모터 속도 제어 API, /Speed=LOW, /Speed=HIGH
-	if (request.indexOf("/Speed=LOW") != -1) {
-		LMotorSpeed = 100;   // 좌측 모터 속도를 낮음으로 설정
-		RMotorSpeed = 100;   // 우측 모터 속도를 낮음으로 설정
-
-		client.println("Speed set to LOW");
-	}
-	if (request.indexOf("/Speed=MEDIUM") != -1) {
-		LMotorSpeed = 150;   // 좌측 모터 속도를 중간으로 설정
-		RMotorSpeed = 150;   // 우측 모터 속도를 중간으로 설정
-
-		client.println("Speed set to MEDIUM");
-	}
-	if (request.indexOf("/Speed=HIGH") != -1) {
-		LMotorSpeed = 255;   // 좌측 모터 속도를 높음으로 설정
-		RMotorSpeed = 255;   // 우측 모터 속도를 높음으로 설정
-
-		client.println("Speed set to HIGH");
 	}
 }
